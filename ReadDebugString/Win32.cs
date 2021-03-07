@@ -51,7 +51,11 @@ namespace ReadDebugString.Win32
             if (!result) throw new Win32Exception();
         }
 
-        public static void DebugSetProcessKillOnExit(bool killOnExit) => Sdk.PInvoke.DebugSetProcessKillOnExit(killOnExit);
+        public static void DebugSetProcessKillOnExit(bool killOnExit)
+        {
+            var result = Sdk.PInvoke.DebugSetProcessKillOnExit(killOnExit);
+            if (!result) throw new Win32Exception();
+        }
 
         public static unsafe T? ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress) where T : unmanaged
         {
