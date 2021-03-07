@@ -41,17 +41,17 @@ namespace ReadDebugString.Threading
     class Worker : IDisposable
     {
         private readonly Thread thread;
-        private readonly BlockingCollection<IJob> queue;
+        private readonly BlockingCollection<Job> queue;
 
         public Worker()
         {
             thread = new Thread(Run) { IsBackground = true };
-            queue = new BlockingCollection<IJob>(1);
+            queue = new BlockingCollection<Job>(1);
 
             thread.Start();
         }
 
-        public void Add(IJob job) => queue.Add(job);
+        public void Add(Job job) => queue.Add(job);
 
         private void Run()
         {
@@ -74,90 +74,72 @@ namespace ReadDebugString.Threading
         }
     }
 
-    class ActionJob : IJob, IDisposable
+    class ActionJob : Job
     {
         private readonly Action action;
-        private readonly CultureInfo culture;
-        private readonly CultureInfo uiCulture;
-        private readonly ManualResetEvent completed = new(false);
-        private ExceptionDispatchInfo? exception;
 
-        public ActionJob(Action action)
-        {
-            this.action = action;
-            culture = CultureInfo.CurrentCulture;
-            uiCulture = CultureInfo.CurrentUICulture;
-        }
-
-        public void Run()
-        {
-            try
-            {
-                CultureInfo.CurrentCulture = culture;
-                CultureInfo.CurrentUICulture = uiCulture;
-                action();
-            }
-            catch (Exception e)
-            {
-                exception = ExceptionDispatchInfo.Capture(e);
-            }
-            completed.Set();
-        }
+        public ActionJob(Action action) : base() => this.action = action;
+        protected override void RunImpl() => action();
 
         public void Result()
         {
-            completed.WaitOne();
-            if (exception is not null) exception.Throw();
+            Wait();
+            ThrowIfFailed();
         }
-
-        public void Dispose()
-        {
-            DisposeImpl();
-            GC.SuppressFinalize(this);
-        }
-
-        ~ActionJob() => DisposeImpl();
-        private void DisposeImpl() => completed.Dispose();
     }
 
-    class FuncJob<T> : IJob, IDisposable
+    class FuncJob<T> : Job
     {
         private readonly Func<T> func;
-        private readonly CultureInfo culture;
-        private readonly CultureInfo uiCulture;
-        private readonly ManualResetEvent completed = new(false);
         private T? result;
-        private ExceptionDispatchInfo? exception;
 
-        public FuncJob(Func<T> func)
-        {
-            this.func = func;
-            culture = CultureInfo.CurrentCulture;
-            uiCulture = CultureInfo.CurrentUICulture;
-        }
-
-        public void Run()
-        {
-            try
-            {
-                CultureInfo.CurrentCulture = culture;
-                CultureInfo.CurrentUICulture = uiCulture;
-                result = func();
-            }
-            catch (Exception e)
-            {
-                exception = ExceptionDispatchInfo.Capture(e);
-            }
-            completed.Set();
-        }
+        public FuncJob(Func<T> func) : base() => this.func = func;
+        protected override void RunImpl() => result = func();
 
         public T Result()
         {
-            completed.WaitOne();
-            if (exception is not null) exception.Throw();
+            Wait();
+            ThrowIfFailed();
             if (result is null) throw new InvalidOperationException();
             return result;
         }
+    }
+
+    abstract class Job : IDisposable
+    {
+        private readonly CultureInfo culture = CultureInfo.CurrentCulture;
+        private readonly CultureInfo uiCulture = CultureInfo.CurrentUICulture;
+        private readonly ManualResetEvent completed = new(false);
+        private ExceptionDispatchInfo? exception;
+
+        public void Run()
+        {
+            var culture = CultureInfo.CurrentCulture;
+            var uiCulture = CultureInfo.CurrentUICulture;
+            try
+            {
+                CultureInfo.CurrentCulture = this.culture;
+                CultureInfo.CurrentUICulture = this.uiCulture;
+                try
+                {
+                    RunImpl();
+                }
+                catch (Exception e)
+                {
+                    exception = ExceptionDispatchInfo.Capture(e);
+                }
+                completed.Set();
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = uiCulture;
+            }
+        }
+
+        protected abstract void RunImpl();
+        protected void Wait() => completed.WaitOne();
+        protected void ThrowIfFailed() => exception?.Throw();
 
         public void Dispose()
         {
@@ -165,12 +147,7 @@ namespace ReadDebugString.Threading
             GC.SuppressFinalize(this);
         }
 
-        ~FuncJob() => DisposeImpl();
+        ~Job() => DisposeImpl();
         private void DisposeImpl() => completed.Dispose();
-    }
-
-    interface IJob
-    {
-        public void Run();
     }
 }
