@@ -3,6 +3,7 @@ ContinueDebugEvent
 CreateProcessW
 DebugActiveProcess
 DebugActiveProcessStop
+DebugSetProcessKillOnExit
 INFINITE
 PROCESS_CREATION_FLAGS
 ReadProcessMemory

@@ -21,6 +21,7 @@ namespace ReadDebugString
         public DebugStringStream(string? applicationName, string? commandLine)
         {
             var processInformation = debugger.CreateProcess(applicationName, commandLine, Win32.Constants.ProcessCreationFlags.DebugOnlyThisProcess);
+            debugger.DebugSetProcessKillOnExit(false);
             processId = processInformation.ProcessId;
             process = processInformation.Process;
         }
@@ -28,6 +29,7 @@ namespace ReadDebugString
         public DebugStringStream(int processId)
         {
             debugger.DebugActiveProcess(processId);
+            debugger.DebugSetProcessKillOnExit(false);
             this.processId = processId;
         }
 
@@ -109,11 +111,6 @@ namespace ReadDebugString
         }
 
         ~DebugStringStream() => DisposeImpl();
-
-        private void DisposeImpl()
-        {
-            debugger.DebugActiveProcessStop(processId);
-            debugger.Dispose();
-        }
+        private void DisposeImpl() => debugger.Dispose();
     }
 }
