@@ -18,7 +18,6 @@ namespace ReadDebugString
         public Task<Win32.DebugEvent> WaitForDebugEventAsync(int milliseconds) => dispatcher.InvokeAsync(() => Win32.Methods.WaitForDebugEvent(milliseconds));
         public void ContinueDebugEvent(Win32.DebugEvent debugEvent, uint continueStatus) => dispatcher.Invoke(() => Win32.Methods.ContinueDebugEvent(debugEvent, continueStatus));
         public void DebugActiveProcessStop(int processId) => dispatcher.Invoke(() => Win32.Methods.DebugActiveProcessStop(processId));
-        public void Dispose() => dispatcher.Dispose();
 
         public Win32.DebugEvent WaitForDebugEvent(CancellationToken cancellationToken)
         {
@@ -49,5 +48,14 @@ namespace ReadDebugString
                 }
             }
         }
+
+        public void Dispose()
+        {
+            DisposeImpl();
+            GC.SuppressFinalize(this);
+        }
+
+        ~Debugger() => DisposeImpl();
+        private void DisposeImpl() => dispatcher.Dispose();
     }
 }

@@ -104,6 +104,14 @@ namespace ReadDebugString
 
         public void Dispose()
         {
+            DisposeImpl();
+            GC.SuppressFinalize(this);
+        }
+
+        ~DebugStringStream() => DisposeImpl();
+
+        private void DisposeImpl()
+        {
             debugger.DebugActiveProcessStop(processId);
             debugger.Dispose();
         }
