@@ -1,0 +1,9 @@
+﻿CloseHandle
+ContinueDebugEvent
+CreateProcessW
+DebugActiveProcess
+DebugActiveProcessStop
+INFINITE
+PROCESS_CREATION_FLAGS
+ReadProcessMemory
+WaitForDebugEventEx
