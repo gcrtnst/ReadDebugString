@@ -24,14 +24,12 @@ namespace ReadDebugString
         {
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     return WaitForDebugEvent(100);
                 }
-                catch (Win32Exception e) when (e.NativeErrorCode == 121)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                catch (Win32Exception e) when (e.NativeErrorCode == 121) { }
             }
         }
 
@@ -39,14 +37,12 @@ namespace ReadDebugString
         {
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     return await WaitForDebugEventAsync(100);
                 }
-                catch (Win32Exception e) when (e.NativeErrorCode == 121)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                catch (Win32Exception e) when (e.NativeErrorCode == 121) { }
             }
         }
 
