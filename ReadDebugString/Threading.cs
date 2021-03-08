@@ -11,8 +11,19 @@ namespace ReadDebugString.Threading
     {
         private readonly Worker worker = new();
 
-        public Task InvokeAsync(Action action) => Task.Run(() => Invoke(action));
-        public Task<T> InvokeAsync<T>(Func<T> func) => Task.Run(() => Invoke(func));
+        public async Task InvokeAsync(Action action)
+        {
+            using var job = new ActionJob(action);
+            worker.Add(job);
+            await job.ResultAsync();
+        }
+
+        public async Task<T> InvokeAsync<T>(Func<T> func)
+        {
+            using var job = new FuncJob<T>(func);
+            worker.Add(job);
+            return await job.ResultAsync();
+        }
 
         public void Invoke(Action action)
         {
@@ -81,6 +92,12 @@ namespace ReadDebugString.Threading
         public ActionJob(Action action) : base() => this.action = action;
         protected override void RunImpl() => action();
 
+        public async Task ResultAsync()
+        {
+            await WaitAsync();
+            ThrowIfFailed();
+        }
+
         public void Result()
         {
             Wait();
@@ -95,6 +112,14 @@ namespace ReadDebugString.Threading
 
         public FuncJob(Func<T> func) : base() => this.func = func;
         protected override void RunImpl() => result = func();
+
+        public async Task<T> ResultAsync()
+        {
+            await WaitAsync();
+            ThrowIfFailed();
+            if (result is null) throw new InvalidOperationException();
+            return result;
+        }
 
         public T Result()
         {
@@ -140,6 +165,15 @@ namespace ReadDebugString.Threading
         protected abstract void RunImpl();
         protected void Wait() => completed.WaitOne();
         protected void ThrowIfFailed() => exception?.Throw();
+
+        protected Task WaitAsync()
+        {
+            var tcs = new TaskCompletionSource();
+            var rwh = ThreadPool.RegisterWaitForSingleObject(completed, delegate { tcs.SetResult(); }, null, -1, true);
+            var task = tcs.Task;
+            task.ContinueWith((_) => { rwh.Unregister(completed); });
+            return task;
+        }
 
         public void Dispose()
         {
