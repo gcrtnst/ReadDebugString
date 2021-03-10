@@ -46,28 +46,9 @@ namespace ReadDebugString
         {
             while (true)
             {
-                var continueStatus = Win32.Constants.DbgExceptionNotHandled;
                 var debugEvent = debugger.WaitForDebugEvent(token);
-                try
-                {
-                    switch (debugEvent)
-                    {
-                        case Win32.CreateProcessDebugEvent createProcessDebugEvent when process is null:
-                            process = createProcessDebugEvent.Process;
-                            break;
-                        case Win32.ExitProcessDebugEvent exitProcessDebugEvent:
-                            return false;
-                        case Win32.OutputDebugStringEvent outputDebugStringEvent:
-                            continueStatus = Win32.Constants.DbgContinue;
-                            if (process is null) throw new InvalidOperationException();
-                            Current = outputDebugStringEvent.ReadDebugStringData(process);
-                            return true;
-                    }
-                }
-                finally
-                {
-                    debugger.ContinueDebugEvent(debugEvent, continueStatus);
-                }
+                var ok = HandleDebugEvent(debugEvent);
+                if (ok.HasValue) return ok.Value;
             }
         }
 
@@ -75,28 +56,35 @@ namespace ReadDebugString
         {
             while (true)
             {
-                var continueStatus = Win32.Constants.DbgExceptionNotHandled;
                 var debugEvent = await debugger.WaitForDebugEventAsync(token);
-                try
+                var ok = HandleDebugEvent(debugEvent);
+                if (ok.HasValue) return ok.Value;
+            }
+        }
+
+        private bool? HandleDebugEvent(Win32.DebugEvent debugEvent)
+        {
+            var continueStatus = Win32.Constants.DbgExceptionNotHandled;
+            try
+            {
+                switch (debugEvent)
                 {
-                    switch (debugEvent)
-                    {
-                        case Win32.CreateProcessDebugEvent createProcessDebugEvent when process is null:
-                            process = createProcessDebugEvent.Process;
-                            break;
-                        case Win32.ExitProcessDebugEvent exitProcessDebugEvent:
-                            return false;
-                        case Win32.OutputDebugStringEvent outputDebugStringEvent:
-                            continueStatus = Win32.Constants.DbgContinue;
-                            if (process is null) throw new InvalidOperationException();
-                            Current = outputDebugStringEvent.ReadDebugStringData(process);
-                            return true;
-                    }
+                    case Win32.CreateProcessDebugEvent createProcessDebugEvent when process is null:
+                        process = createProcessDebugEvent.Process;
+                        break;
+                    case Win32.ExitProcessDebugEvent exitProcessDebugEvent:
+                        return false;
+                    case Win32.OutputDebugStringEvent outputDebugStringEvent:
+                        continueStatus = Win32.Constants.DbgContinue;
+                        if (process is null) throw new InvalidOperationException();
+                        Current = outputDebugStringEvent.ReadDebugStringData(process);
+                        return true;
                 }
-                finally
-                {
-                    debugger.ContinueDebugEvent(debugEvent, continueStatus);
-                }
+                return null;
+            }
+            finally
+            {
+                debugger.ContinueDebugEvent(debugEvent, continueStatus);
             }
         }
 
