@@ -64,7 +64,7 @@ namespace ReadDebugString
 
         private bool? HandleDebugEvent(Win32.DebugEvent debugEvent)
         {
-            var continueStatus = Win32.Constants.DbgExceptionNotHandled;
+            var continueStatus = Win32.Constants.DebugContinueStatus.DbgExceptionNotHandled;
             try
             {
                 switch (debugEvent)
@@ -83,7 +83,7 @@ namespace ReadDebugString
                         loadDllDebugEvent.File.Close();
                         break;
                     case Win32.OutputDebugStringEvent outputDebugStringEvent:
-                        continueStatus = Win32.Constants.DbgContinue;
+                        continueStatus = Win32.Constants.DebugContinueStatus.DbgContinue;
                         if (process is null) throw new InvalidOperationException();
                         Current = outputDebugStringEvent.ReadDebugStringData(process);
                         return true;

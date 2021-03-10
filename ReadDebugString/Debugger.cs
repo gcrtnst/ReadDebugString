@@ -16,7 +16,7 @@ namespace ReadDebugString
         public Win32.DebugEvent WaitForDebugEvent(uint milliseconds) => dispatcher.Invoke(() => Win32.Methods.WaitForDebugEvent(milliseconds));
         public Task<Win32.DebugEvent> WaitForDebugEventAsync() => dispatcher.InvokeAsync(Win32.Methods.WaitForDebugEvent);
         public Task<Win32.DebugEvent> WaitForDebugEventAsync(uint milliseconds) => dispatcher.InvokeAsync(() => Win32.Methods.WaitForDebugEvent(milliseconds));
-        public void ContinueDebugEvent(Win32.DebugEvent debugEvent, uint continueStatus) => dispatcher.Invoke(() => Win32.Methods.ContinueDebugEvent(debugEvent, continueStatus));
+        public void ContinueDebugEvent(Win32.DebugEvent debugEvent, Win32.Constants.DebugContinueStatus continueStatus) => dispatcher.Invoke(() => Win32.Methods.ContinueDebugEvent(debugEvent, continueStatus));
         public void DebugActiveProcessStop(uint processId) => dispatcher.Invoke(() => Win32.Methods.DebugActiveProcessStop(processId));
         public void DebugSetProcessKillOnExit(bool killOnExit) => dispatcher.Invoke(() => Win32.Methods.DebugSetProcessKillOnExit(killOnExit));
 

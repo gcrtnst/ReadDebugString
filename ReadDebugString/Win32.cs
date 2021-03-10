@@ -31,9 +31,9 @@ namespace ReadDebugString.Win32
             }
         }
 
-        public static void ContinueDebugEvent(DebugEvent debugEvent, uint continueStatus)
+        public static void ContinueDebugEvent(DebugEvent debugEvent, Constants.DebugContinueStatus continueStatus)
         {
-            var result = Sdk.PInvoke.ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, continueStatus);
+            var result = Sdk.PInvoke.ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, (uint)continueStatus);
             if (!result) throw new Win32Exception();
         }
 
@@ -92,9 +92,12 @@ namespace ReadDebugString.Win32
 
     public class Constants
     {
-        public static readonly uint DbgContinue = 0x00010002;
-        public static readonly uint DbgExceptionNotHandled = 0x80010001;
-        public static readonly uint DbgReplyLater = 0x40010001;
+        public enum DebugContinueStatus : uint
+        {
+            DbgContinue = 0x00010002,
+            DbgExceptionNotHandled = 0x80010001,
+            DbgReplyLater = 0x40010001,
+        }
 
         [Flags]
         public enum ProcessCreationFlags : uint
