@@ -159,7 +159,7 @@ namespace ReadDebugString.Win32
             if (imageName == IntPtr.Zero) return null;
             var imageName2 = Methods.ReadProcessMemory<IntPtr>(process, imageName);
             if (imageName2 is null) return null;
-            return ReadString(process, imageName2 ?? (IntPtr)0, unicode);
+            return ReadString(process, (IntPtr)imageName2, unicode);
         }
 
         private protected static unsafe string? ReadString(SafeProcessHandle process, IntPtr baseAddress, bool unicode) => unicode switch
