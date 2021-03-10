@@ -62,7 +62,11 @@ namespace ReadDebugString.Win32
             nuint numberOfBytesRead;
             bool result;
             fixed (void* lpBuffer = buffer) result = Sdk.PInvoke.ReadProcessMemory(process, (void*)baseAddress, lpBuffer, (nuint)buffer.Length * (nuint)sizeof(T), &numberOfBytesRead);
-            if (!result) throw new Win32Exception();
+            if (!result)
+            {
+                var e = new Win32Exception();
+                if (e.NativeErrorCode != 299) throw e;
+            }
             return numberOfBytesRead;
         }
 
