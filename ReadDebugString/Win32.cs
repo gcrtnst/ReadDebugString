@@ -9,20 +9,13 @@ namespace ReadDebugString.Win32
 {
     public static class Methods
     {
-        public static void DebugActiveProcess(int processId)
+        public static void DebugActiveProcess(uint processId)
         {
-            if (processId < 0) throw new ArgumentOutOfRangeException(nameof(processId));
-            var result = Sdk.PInvoke.DebugActiveProcess((uint)processId);
+            var result = Sdk.PInvoke.DebugActiveProcess(processId);
             if (!result) throw new Win32Exception();
         }
 
         public static DebugEvent WaitForDebugEvent() => WaitForDebugEvent(Sdk.Constants.INFINITE);
-
-        public static DebugEvent WaitForDebugEvent(int milliseconds) => milliseconds switch
-        {
-            < 0 => throw new ArgumentOutOfRangeException(nameof(milliseconds)),
-            _ => WaitForDebugEvent((uint)milliseconds),
-        };
 
         public static DebugEvent WaitForDebugEvent(uint milliseconds)
         {
@@ -40,14 +33,13 @@ namespace ReadDebugString.Win32
 
         public static void ContinueDebugEvent(DebugEvent debugEvent, uint continueStatus)
         {
-            var result = Sdk.PInvoke.ContinueDebugEvent((uint)debugEvent.ProcessId, (uint)debugEvent.ThreadId, continueStatus);
+            var result = Sdk.PInvoke.ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, continueStatus);
             if (!result) throw new Win32Exception();
         }
 
-        public static void DebugActiveProcessStop(int processId)
+        public static void DebugActiveProcessStop(uint processId)
         {
-            if (processId < 0) throw new ArgumentOutOfRangeException(nameof(processId));
-            var result = Sdk.PInvoke.DebugActiveProcessStop((uint)processId);
+            var result = Sdk.PInvoke.DebugActiveProcessStop(processId);
             if (!result) throw new Win32Exception();
         }
 
@@ -61,17 +53,17 @@ namespace ReadDebugString.Win32
         {
             var buf = new T[1];
             var size = ReadProcessMemory(process, baseAddress, buf.AsSpan());
-            if (size < sizeof(T)) return null;
+            if (size < (nuint)sizeof(T)) return null;
             return buf[0];
         }
 
-        public static unsafe int ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress, Span<T> buffer) where T : unmanaged
+        public static unsafe nuint ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress, Span<T> buffer) where T : unmanaged
         {
             nuint numberOfBytesRead;
             bool result;
             fixed (void* lpBuffer = buffer) result = Sdk.PInvoke.ReadProcessMemory(process, (void*)baseAddress, lpBuffer, (nuint)buffer.Length * (nuint)sizeof(T), &numberOfBytesRead);
             if (!result) throw new Win32Exception();
-            return checked((int)numberOfBytesRead);
+            return numberOfBytesRead;
         }
 
         public static unsafe ProcessInformation CreateProcess(string? applicationName, string? commandLine, Constants.ProcessCreationFlags creationFlags)
@@ -139,10 +131,10 @@ namespace ReadDebugString.Win32
 
     public class DebugEvent
     {
-        public readonly int ProcessId;
-        public readonly int ThreadId;
+        public readonly uint ProcessId;
+        public readonly uint ThreadId;
 
-        internal DebugEvent(int processId, int threadId)
+        internal DebugEvent(uint processId, uint threadId)
         {
             ProcessId = processId;
             ThreadId = threadId;
@@ -150,15 +142,15 @@ namespace ReadDebugString.Win32
 
         internal static DebugEvent Unmarshal(Sdk.DEBUG_EVENT debugEvent) => debugEvent.dwDebugEventCode switch
         {
-            3 => new CreateProcessDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.CreateProcessInfo),
-            2 => new CreateThreadDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.CreateThread),
-            1 => new ExceptionDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.Exception),
-            5 => new ExitProcessDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.ExitProcess),
-            4 => new ExitThreadDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.ExitThread),
-            6 => new LoadDllDebugEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.LoadDll),
-            8 => new OutputDebugStringEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.DebugString),
-            9 => new RipEvent((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.RipInfo),
-            7 => new UnloadDllDebugInfo((int)debugEvent.dwProcessId, (int)debugEvent.dwThreadId, debugEvent.u.UnloadDll),
+            3 => new CreateProcessDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.CreateProcessInfo),
+            2 => new CreateThreadDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.CreateThread),
+            1 => new ExceptionDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.Exception),
+            5 => new ExitProcessDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.ExitProcess),
+            4 => new ExitThreadDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.ExitThread),
+            6 => new LoadDllDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.LoadDll),
+            8 => new OutputDebugStringEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.DebugString),
+            9 => new RipEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.RipInfo),
+            7 => new UnloadDllDebugInfo(debugEvent.dwProcessId, debugEvent.dwThreadId, debugEvent.u.UnloadDll),
             _ => throw new ArgumentException(null, nameof(debugEvent)),
         };
 
@@ -220,7 +212,7 @@ namespace ReadDebugString.Win32
         readonly IntPtr imageName;
         readonly bool unicode;
 
-        internal unsafe CreateProcessDebugEvent(int processId, int threadId, Sdk.CREATE_PROCESS_DEBUG_INFO info) : base(processId, threadId)
+        internal unsafe CreateProcessDebugEvent(uint processId, uint threadId, Sdk.CREATE_PROCESS_DEBUG_INFO info) : base(processId, threadId)
         {
             File = new SafeFileHandle(info.hFile, true);
             Process = new SafeProcessHandle(info.hProcess, false);
@@ -244,7 +236,7 @@ namespace ReadDebugString.Win32
         public readonly IntPtr ThreadLocalBase;
         public readonly IntPtr StartAddress;
 
-        internal unsafe CreateThreadDebugEvent(int processId, int threadId, Sdk.CREATE_THREAD_DEBUG_INFO info) : base(processId, threadId)
+        internal unsafe CreateThreadDebugEvent(uint processId, uint threadId, Sdk.CREATE_THREAD_DEBUG_INFO info) : base(processId, threadId)
         {
             Thread = new SafeThreadHandle(info.hThread, false);
             ThreadLocalBase = (IntPtr)info.lpThreadLocalBase;
@@ -257,7 +249,7 @@ namespace ReadDebugString.Win32
         public readonly ExceptionRecord ExceptionRecord;
         public readonly bool FirstChance;
 
-        internal ExceptionDebugEvent(int processId, int threadId, Sdk.EXCEPTION_DEBUG_INFO info) : base(processId, threadId)
+        internal ExceptionDebugEvent(uint processId, uint threadId, Sdk.EXCEPTION_DEBUG_INFO info) : base(processId, threadId)
         {
             ExceptionRecord = new ExceptionRecord(info.ExceptionRecord);
             FirstChance = info.dwFirstChance != 0;
@@ -266,21 +258,21 @@ namespace ReadDebugString.Win32
 
     public class ExitProcessDebugEvent : DebugEvent
     {
-        public readonly int ExitCode;
+        public readonly uint ExitCode;
 
-        internal ExitProcessDebugEvent(int processId, int threadId, Sdk.EXIT_PROCESS_DEBUG_INFO info) : base(processId, threadId)
+        internal ExitProcessDebugEvent(uint processId, uint threadId, Sdk.EXIT_PROCESS_DEBUG_INFO info) : base(processId, threadId)
         {
-            ExitCode = (int)info.dwExitCode;
+            ExitCode = info.dwExitCode;
         }
     }
 
     public class ExitThreadDebugEvent : DebugEvent
     {
-        public readonly int ExitCode;
+        public readonly uint ExitCode;
 
-        internal ExitThreadDebugEvent(int processId, int threadId, Sdk.EXIT_THREAD_DEBUG_INFO info) : base(processId, threadId)
+        internal ExitThreadDebugEvent(uint processId, uint threadId, Sdk.EXIT_THREAD_DEBUG_INFO info) : base(processId, threadId)
         {
-            ExitCode = (int)info.dwExitCode;
+            ExitCode = info.dwExitCode;
         }
     }
 
@@ -293,7 +285,7 @@ namespace ReadDebugString.Win32
         readonly IntPtr imageName;
         readonly bool unicode;
 
-        internal unsafe LoadDllDebugEvent(int processId, int threadId, Sdk.LOAD_DLL_DEBUG_INFO info) : base(processId, threadId)
+        internal unsafe LoadDllDebugEvent(uint processId, uint threadId, Sdk.LOAD_DLL_DEBUG_INFO info) : base(processId, threadId)
         {
             File = new SafeFileHandle(info.hFile, true);
             BaseOfDll = (IntPtr)info.lpBaseOfDll;
@@ -311,7 +303,7 @@ namespace ReadDebugString.Win32
         readonly IntPtr debugStringData;
         readonly bool unicode;
 
-        internal unsafe OutputDebugStringEvent(int processId, int threadId, Sdk.OUTPUT_DEBUG_STRING_INFO info) : base(processId, threadId)
+        internal unsafe OutputDebugStringEvent(uint processId, uint threadId, Sdk.OUTPUT_DEBUG_STRING_INFO info) : base(processId, threadId)
         {
             debugStringData = (IntPtr)info.lpDebugStringData.Value;
             unicode = info.fUnicode != 0;
@@ -327,12 +319,12 @@ namespace ReadDebugString.Win32
 
     public class RipEvent : DebugEvent
     {
-        public readonly int Error;
+        public readonly uint Error;
         public readonly uint Type;
 
-        internal RipEvent(int processId, int threadId, Sdk.RIP_INFO info) : base(processId, threadId)
+        internal RipEvent(uint processId, uint threadId, Sdk.RIP_INFO info) : base(processId, threadId)
         {
-            Error = checked((int)info.dwError);
+            Error = info.dwError;
             Type = info.dwType;
         }
     }
@@ -341,7 +333,7 @@ namespace ReadDebugString.Win32
     {
         public readonly IntPtr BaseOfDll;
 
-        internal unsafe UnloadDllDebugInfo(int processId, int threadId, Sdk.UNLOAD_DLL_DEBUG_INFO info) : base(processId, threadId)
+        internal unsafe UnloadDllDebugInfo(uint processId, uint threadId, Sdk.UNLOAD_DLL_DEBUG_INFO info) : base(processId, threadId)
         {
             BaseOfDll = (IntPtr)info.lpBaseOfDll;
         }
@@ -371,15 +363,15 @@ namespace ReadDebugString.Win32
     {
         public readonly SafeProcessHandle Process;
         public readonly SafeThreadHandle Thread;
-        public readonly int ProcessId;
-        public readonly int ThreadId;
+        public readonly uint ProcessId;
+        public readonly uint ThreadId;
 
         internal ProcessInformation(Sdk.PROCESS_INFORMATION processInformation)
         {
             Process = new SafeProcessHandle(processInformation.hProcess, true);
             Thread = new SafeThreadHandle(processInformation.hThread, true);
-            ProcessId = (int)processInformation.dwProcessId;
-            ThreadId = (int)processInformation.dwThreadId;
+            ProcessId = processInformation.dwProcessId;
+            ThreadId = processInformation.dwThreadId;
         }
     }
 

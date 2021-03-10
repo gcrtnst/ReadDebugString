@@ -15,9 +15,9 @@ namespace ReadDebugString
         {
             var attachCommand = new Command("attach")
             {
-                new Argument<int>("pid"),
+                new Argument<uint>("pid"),
             };
-            attachCommand.Handler = CommandHandler.Create((int pid, IConsole console, CancellationToken token) => AttachMain(pid, console, token));
+            attachCommand.Handler = CommandHandler.Create((uint pid, IConsole console, CancellationToken token) => AttachMain(pid, console, token));
 
             var startCommand = new Command("start")
             {
@@ -36,7 +36,7 @@ namespace ReadDebugString
             return await rootCommand.InvokeAsync(args);
         }
 
-        static async Task<int> AttachMain(int pid, IConsole console, CancellationToken token)
+        static async Task<int> AttachMain(uint pid, IConsole console, CancellationToken token)
         {
             if (pid < 0)
             {

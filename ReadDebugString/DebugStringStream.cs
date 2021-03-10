@@ -9,7 +9,7 @@ namespace ReadDebugString
 {
     class DebugStringStream : IAsyncEnumerable<string>, IAsyncEnumerator<string>, IEnumerable<string>, IEnumerator<string>
     {
-        public readonly int processId;
+        public readonly uint processId;
 
         private readonly Debugger debugger = new();
         private SafeProcessHandle? process;
@@ -26,7 +26,7 @@ namespace ReadDebugString
             process = processInformation.Process;
         }
 
-        public DebugStringStream(int processId)
+        public DebugStringStream(uint processId)
         {
             debugger.DebugActiveProcess(processId);
             debugger.DebugSetProcessKillOnExit(false);
