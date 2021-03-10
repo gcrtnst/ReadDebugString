@@ -90,7 +90,7 @@ namespace ReadDebugString
         private static string BuildCommandLine(IList<string> args)
         {
             if (args.Count < 1) throw new ArgumentException(null, nameof(args));
-            var regex = new Regex(@"(\+)""", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+            var regex = new Regex(@"(\\+)(""|$)", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
             var escaped = new List<string>
             {
@@ -99,7 +99,7 @@ namespace ReadDebugString
             for (var i = 1; i < args.Count; i++)
             {
                 var s = args[i];
-                s = regex.Replace(s, "$1$1\"");
+                s = regex.Replace(s, "$1$1$2");
                 s = s.Replace("\"", @"\""");
                 s = "\"" + s + "\"";
                 escaped.Add(s);
