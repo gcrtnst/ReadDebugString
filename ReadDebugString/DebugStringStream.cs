@@ -13,7 +13,7 @@ namespace ReadDebugString
 
         private readonly Debugger debugger = new();
         private SafeProcessHandle? process;
-        private CancellationToken cancellationToken;
+        private CancellationToken token;
 
         public string Current { get; private set; } = "";
         object IEnumerator.Current => Current;
@@ -33,9 +33,9 @@ namespace ReadDebugString
             this.processId = processId;
         }
 
-        public IAsyncEnumerator<string> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public IAsyncEnumerator<string> GetAsyncEnumerator(CancellationToken token = default)
         {
-            this.cancellationToken = cancellationToken;
+            this.token = token;
             return this;
         }
 
@@ -47,7 +47,7 @@ namespace ReadDebugString
             while (true)
             {
                 var continueStatus = Win32.Constants.DbgExceptionNotHandled;
-                var debugEvent = debugger.WaitForDebugEvent(cancellationToken);
+                var debugEvent = debugger.WaitForDebugEvent(token);
                 try
                 {
                     switch (debugEvent)
@@ -76,7 +76,7 @@ namespace ReadDebugString
             while (true)
             {
                 var continueStatus = Win32.Constants.DbgExceptionNotHandled;
-                var debugEvent = await debugger.WaitForDebugEventAsync(cancellationToken);
+                var debugEvent = await debugger.WaitForDebugEventAsync(token);
                 try
                 {
                     switch (debugEvent)

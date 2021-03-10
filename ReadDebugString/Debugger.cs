@@ -20,11 +20,11 @@ namespace ReadDebugString
         public void DebugActiveProcessStop(uint processId) => dispatcher.Invoke(() => Win32.Methods.DebugActiveProcessStop(processId));
         public void DebugSetProcessKillOnExit(bool killOnExit) => dispatcher.Invoke(() => Win32.Methods.DebugSetProcessKillOnExit(killOnExit));
 
-        public Win32.DebugEvent WaitForDebugEvent(CancellationToken cancellationToken)
+        public Win32.DebugEvent WaitForDebugEvent(CancellationToken token)
         {
             while (true)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                token.ThrowIfCancellationRequested();
                 try
                 {
                     return WaitForDebugEvent(100);
@@ -33,11 +33,11 @@ namespace ReadDebugString
             }
         }
 
-        public async Task<Win32.DebugEvent> WaitForDebugEventAsync(CancellationToken cancellationToken)
+        public async Task<Win32.DebugEvent> WaitForDebugEventAsync(CancellationToken token)
         {
             while (true)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                token.ThrowIfCancellationRequested();
                 try
                 {
                     return await WaitForDebugEventAsync(100);
