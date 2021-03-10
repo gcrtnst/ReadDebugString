@@ -69,11 +69,19 @@ namespace ReadDebugString
             {
                 switch (debugEvent)
                 {
-                    case Win32.CreateProcessDebugEvent createProcessDebugEvent when process is null:
-                        process = createProcessDebugEvent.Process;
+                    case Win32.CreateProcessDebugEvent createProcessDebugEvent:
+                        createProcessDebugEvent.File.Close();
+                        createProcessDebugEvent.Thread.Close();
+                        if (process is null) process = createProcessDebugEvent.Process;
+                        break;
+                    case Win32.CreateThreadDebugEvent createThreadDebugEvent:
+                        createThreadDebugEvent.Thread.Close();
                         break;
                     case Win32.ExitProcessDebugEvent exitProcessDebugEvent:
                         return false;
+                    case Win32.LoadDllDebugEvent loadDllDebugEvent:
+                        loadDllDebugEvent.File.Close();
+                        break;
                     case Win32.OutputDebugStringEvent outputDebugStringEvent:
                         continueStatus = Win32.Constants.DbgContinue;
                         if (process is null) throw new InvalidOperationException();
@@ -99,6 +107,11 @@ namespace ReadDebugString
         }
 
         ~DebugStringStream() => DisposeImpl();
-        private void DisposeImpl() => debugger.Dispose();
+
+        private void DisposeImpl()
+        {
+            process?.Dispose();
+            debugger.Dispose();
+        }
     }
 }
