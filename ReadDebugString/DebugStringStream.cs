@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ReadDebugString
 {
-    class DebugStringStream : IAsyncEnumerable<string>, IAsyncEnumerator<string>, IEnumerable<string>, IEnumerator<string>
+    internal class DebugStringStream : IAsyncEnumerable<string>, IAsyncEnumerator<string>, IEnumerable<string>, IEnumerator<string>
     {
         public readonly uint processId;
 

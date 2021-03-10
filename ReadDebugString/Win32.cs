@@ -19,7 +19,7 @@ namespace ReadDebugString.Win32
 
         public static DebugEvent WaitForDebugEvent(uint milliseconds)
         {
-            var result = Sdk.PInvoke.WaitForDebugEventEx(out Sdk.DEBUG_EVENT debugEvent, milliseconds);
+            var result = Sdk.PInvoke.WaitForDebugEventEx(out var debugEvent, milliseconds);
             if (!result) throw new Win32Exception();
             try
             {
@@ -176,7 +176,7 @@ namespace ReadDebugString.Win32
             while (true)
             {
                 var c = Methods.ReadProcessMemory<char>(process, (IntPtr)baseAddress);
-                if (c is null || c == 0) break;
+                if (c is null or (char?)0) break;
                 buf.Add(c ?? '\0');
                 baseAddress++;
             }
@@ -191,7 +191,7 @@ namespace ReadDebugString.Win32
             while (true)
             {
                 var c = Methods.ReadProcessMemory<byte>(process, (IntPtr)baseAddress);
-                if (c is null || c == 0) break;
+                if (c is null or (byte?)0) break;
                 buf.Add(c ?? 0);
                 baseAddress++;
             }
@@ -209,8 +209,8 @@ namespace ReadDebugString.Win32
         public readonly uint DebugInfoSize;
         public readonly IntPtr ThreadLocalBase;
         public readonly IntPtr StartAddress;
-        readonly IntPtr imageName;
-        readonly bool unicode;
+        private readonly IntPtr imageName;
+        private readonly bool unicode;
 
         internal unsafe CreateProcessDebugEvent(uint processId, uint threadId, Sdk.CREATE_PROCESS_DEBUG_INFO info) : base(processId, threadId)
         {
@@ -282,8 +282,8 @@ namespace ReadDebugString.Win32
         public readonly IntPtr BaseOfDll;
         public readonly uint DebugInfoFileOffset;
         public readonly uint DebugInfoSize;
-        readonly IntPtr imageName;
-        readonly bool unicode;
+        private readonly IntPtr imageName;
+        private readonly bool unicode;
 
         internal unsafe LoadDllDebugEvent(uint processId, uint threadId, Sdk.LOAD_DLL_DEBUG_INFO info) : base(processId, threadId)
         {
@@ -300,8 +300,8 @@ namespace ReadDebugString.Win32
 
     public class OutputDebugStringEvent : DebugEvent
     {
-        readonly IntPtr debugStringData;
-        readonly bool unicode;
+        private readonly IntPtr debugStringData;
+        private readonly bool unicode;
 
         internal unsafe OutputDebugStringEvent(uint processId, uint threadId, Sdk.OUTPUT_DEBUG_STRING_INFO info) : base(processId, threadId)
         {
@@ -351,7 +351,7 @@ namespace ReadDebugString.Win32
         {
             Code = record.ExceptionCode;
             Flags = record.ExceptionFlags;
-            if (record.ExceptionRecord != null) this.Record = new ExceptionRecord(*record.ExceptionRecord);
+            if (record.ExceptionRecord != null) Record = new ExceptionRecord(*record.ExceptionRecord);
             Address = (IntPtr)record.ExceptionAddress;
 
             Information = new ulong[record.NumberParameters];
@@ -382,9 +382,6 @@ namespace ReadDebugString.Win32
             SetHandle(existingHandle);
         }
 
-        override protected bool ReleaseHandle()
-        {
-            return Sdk.PInvoke.CloseHandle((Sdk.HANDLE)handle);
-        }
+        protected override bool ReleaseHandle() => Sdk.PInvoke.CloseHandle((Sdk.HANDLE)handle);
     }
 }

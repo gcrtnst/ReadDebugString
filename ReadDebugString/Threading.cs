@@ -49,7 +49,7 @@ namespace ReadDebugString.Threading
         private void DisposeImpl() => worker.Dispose();
     }
 
-    class Worker : IDisposable
+    internal class Worker : IDisposable
     {
         private readonly Thread thread;
         private readonly BlockingCollection<Job> queue;
@@ -85,11 +85,15 @@ namespace ReadDebugString.Threading
         }
     }
 
-    class ActionJob : Job
+    internal class ActionJob : Job
     {
         private readonly Action action;
 
-        public ActionJob(Action action) : base() => this.action = action;
+        public ActionJob(Action action) : base()
+        {
+            this.action = action;
+        }
+
         protected override void RunImpl() => action();
 
         public async Task ResultAsync()
@@ -105,12 +109,16 @@ namespace ReadDebugString.Threading
         }
     }
 
-    class FuncJob<T> : Job
+    internal class FuncJob<T> : Job
     {
         private readonly Func<T> func;
         private T? result;
 
-        public FuncJob(Func<T> func) : base() => this.func = func;
+        public FuncJob(Func<T> func) : base()
+        {
+            this.func = func;
+        }
+
         protected override void RunImpl() => result = func();
 
         public async Task<T> ResultAsync()
@@ -130,7 +138,7 @@ namespace ReadDebugString.Threading
         }
     }
 
-    abstract class Job : IDisposable
+    internal abstract class Job : IDisposable
     {
         private readonly CultureInfo culture = CultureInfo.CurrentCulture;
         private readonly CultureInfo uiCulture = CultureInfo.CurrentUICulture;
@@ -153,7 +161,7 @@ namespace ReadDebugString.Threading
                 {
                     exception = ExceptionDispatchInfo.Capture(e);
                 }
-                completed.Set();
+                _ = completed.Set();
             }
             finally
             {
@@ -171,8 +179,7 @@ namespace ReadDebugString.Threading
             var tcs = new TaskCompletionSource();
             var rwh = ThreadPool.RegisterWaitForSingleObject(completed, delegate { tcs.SetResult(); }, null, -1, true);
             var task = tcs.Task;
-            task.ContinueWith((_) => { rwh.Unregister(completed); });
-            return task;
+            return task.ContinueWith((t) => _ = rwh.Unregister(completed));
         }
 
         public void Dispose()

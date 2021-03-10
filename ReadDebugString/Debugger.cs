@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ReadDebugString
 {
-    class Debugger : IDisposable
+    internal class Debugger : IDisposable
     {
         private readonly Dispatcher dispatcher = new();
 

@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace ReadDebugString
 {
-    class Program
+    internal class Program
     {
-        static async Task<int> Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             var attachCommand = new Command("attach")
             {
@@ -36,7 +36,7 @@ namespace ReadDebugString
             return await rootCommand.InvokeAsync(args);
         }
 
-        static async Task<int> AttachMain(uint pid, IConsole console, CancellationToken token)
+        private static async Task<int> AttachMain(uint pid, IConsole console, CancellationToken token)
         {
             if (pid < 0)
             {
@@ -59,7 +59,7 @@ namespace ReadDebugString
             return 0;
         }
 
-        static async Task<int> StartMain(IList<string> commandLine, IConsole console, CancellationToken token)
+        private static async Task<int> StartMain(IList<string> commandLine, IConsole console, CancellationToken token)
         {
             var s = BuildCommandLine(commandLine);
 
@@ -78,7 +78,7 @@ namespace ReadDebugString
             return 0;
         }
 
-        static async Task MainLoop(DebugStringStream stream, IConsole console, CancellationToken token)
+        private static async Task MainLoop(DebugStringStream stream, IConsole console, CancellationToken token)
         {
             await using var enumerator = stream.GetAsyncEnumerator(token);
             while (await enumerator.MoveNextAsync())
@@ -87,7 +87,7 @@ namespace ReadDebugString
             }
         }
 
-        static string BuildCommandLine(IList<string> args)
+        private static string BuildCommandLine(IList<string> args)
         {
             if (args.Count < 1) throw new ArgumentException(null, nameof(args));
             var regex = new Regex(@"(\+)""", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
