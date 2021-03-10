@@ -156,7 +156,7 @@ namespace ReadDebugString.Win32
 
         private protected static unsafe string? ReadImageName(SafeProcessHandle process, IntPtr imageName, bool unicode)
         {
-            if (imageName == (IntPtr)0) return null;
+            if (imageName == IntPtr.Zero) return null;
             var imageName2 = Methods.ReadProcessMemory<IntPtr>(process, imageName);
             if (imageName2 is null) return null;
             return ReadString(process, imageName2 ?? (IntPtr)0, unicode);
