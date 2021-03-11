@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +62,7 @@ namespace ReadDebugString
 
         private static async Task<int> StartMain(IList<string> commandLine, IConsole console, CancellationToken token)
         {
-            var s = BuildCommandLine(commandLine);
+            var s = BuildCommandLine(commandLine.First(), commandLine.Skip(1));
 
             DebugStringStream stream;
             try
@@ -87,24 +88,26 @@ namespace ReadDebugString
             }
         }
 
-        private static string BuildCommandLine(IList<string> args)
+        private static string BuildCommandLine(string moduleName, IEnumerable<string> commandLine)
         {
-            if (args.Count < 1) throw new ArgumentException(null, nameof(args));
-            var regex = new Regex(@"(\\+)(""|$)", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+            if (moduleName.Contains('"')) throw new ArgumentException(null, nameof(moduleName));
+            return "\"" + moduleName + "\" " + BuildCommandLine(commandLine);
+        }
 
-            var escaped = new List<string>
+        private static readonly Regex buildCommandLineRegex = new(@"(\\+)(""|$)", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+
+        private static string BuildCommandLine(IEnumerable<string> commandLine)
+        {
+            var args = new List<string>();
+            foreach (var c in commandLine)
             {
-                "\"" + args[0] + "\"",
-            };
-            for (var i = 1; i < args.Count; i++)
-            {
-                var s = args[i];
-                s = regex.Replace(s, "$1$1$2");
+                var s = c;
+                s = buildCommandLineRegex.Replace(s, "$1$1$2");
                 s = s.Replace("\"", @"\""");
                 s = "\"" + s + "\"";
-                escaped.Add(s);
+                args.Add(s);
             }
-            return string.Join(" ", escaped);
+            return string.Join(" ", args);
         }
     }
 }
