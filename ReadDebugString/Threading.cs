@@ -5,7 +5,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ReadDebugString.Threading
+namespace ReadDebugString
 {
     public class Dispatcher : IDisposable
     {
