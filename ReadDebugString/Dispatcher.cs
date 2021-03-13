@@ -65,7 +65,14 @@ namespace ReadDebugString
         public void Add(Job job)
         {
             if (Thread.CurrentThread.ManagedThreadId == thread.ManagedThreadId) throw new InvalidOperationException();
-            queue.Add(job);
+            try
+            {
+                queue.Add(job);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ObjectDisposedException(nameof(Worker));
+            }
         }
 
         private void Run()
