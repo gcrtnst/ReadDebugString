@@ -147,6 +147,7 @@ namespace ReadDebugStringTests
         }
 
         [TestMethod]
+        [Timeout(1000)]
         public void Invoke_CallFromDifferentThreads_NoDeadlock()
         {
             using var dispatcher = new Dispatcher();
