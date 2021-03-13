@@ -160,6 +160,14 @@ namespace ReadDebugStringTests
         }
 
         [TestMethod]
+        public void Dispose_CallTwice_IgnoresSecond()
+        {
+            var dispatcher = new Dispatcher();
+            dispatcher.Dispose();
+            dispatcher.Dispose();
+        }
+
+        [TestMethod]
         public void Invoke_CallAfterDispose_Throws()
         {
             var dispatcher = new Dispatcher();

@@ -90,7 +90,11 @@ namespace ReadDebugString
 
         private void DisposeImpl()
         {
-            queue.CompleteAdding();
+            try
+            {
+                queue.CompleteAdding();
+            }
+            catch (ObjectDisposedException) { }
             thread.Join();
             queue.Dispose();
         }
