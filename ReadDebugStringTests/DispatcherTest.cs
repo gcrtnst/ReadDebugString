@@ -143,5 +143,25 @@ namespace ReadDebugStringTests
             var tid2 = dispatcher.Invoke(() => Thread.CurrentThread.ManagedThreadId);
             Assert.AreEqual(tid1, tid2);
         }
+
+        [TestMethod]
+        public void Invoke_CallFromDifferentThreads_NoDeadlock()
+        {
+            using var dispatcher = new Dispatcher();
+            var thread1 = new Thread(() => dispatcher.Invoke(() => Thread.Sleep(100)));
+            var thread2 = new Thread(() => dispatcher.Invoke(() => Thread.Sleep(100)));
+            thread1.Start();
+            thread2.Start();
+            thread1.Join();
+            thread2.Join();
+        }
+
+        [TestMethod]
+        public void Invoke_CallAfterDispose_Throws()
+        {
+            var dispatcher = new Dispatcher();
+            dispatcher.Dispose();
+            _ = Assert.ThrowsException<ObjectDisposedException>(() => dispatcher.Invoke(() => 1));
+        }
     }
 }
