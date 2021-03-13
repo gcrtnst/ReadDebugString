@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ReadDebugString
 {
-    internal class Program
+    public class Program
     {
         private static async Task<int> Main(string[] args)
         {
@@ -88,7 +88,7 @@ namespace ReadDebugString
             }
         }
 
-        private static string BuildCommandLine(string moduleName, IEnumerable<string> commandLine)
+        public static string BuildCommandLine(string moduleName, IEnumerable<string> commandLine)
         {
             if (moduleName.Contains('"')) throw new ArgumentException(null, nameof(moduleName));
             return "\"" + moduleName + "\" " + BuildCommandLine(commandLine);
@@ -96,7 +96,7 @@ namespace ReadDebugString
 
         private static readonly Regex buildCommandLineRegex = new(@"(\\+)(""|$)", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
-        private static string BuildCommandLine(IEnumerable<string> commandLine)
+        public static string BuildCommandLine(IEnumerable<string> commandLine)
         {
             var args = new List<string>();
             foreach (var c in commandLine)
