@@ -165,5 +165,13 @@ namespace ReadDebugStringTests
             dispatcher.Dispose();
             _ = Assert.ThrowsException<ObjectDisposedException>(() => dispatcher.Invoke(() => 1));
         }
+
+        [TestMethod]
+        [Timeout(1000)]
+        public void Invoke_CallFromWorker_Throws()
+        {
+            using var dispatcher = new Dispatcher();
+            _ = Assert.ThrowsException<InvalidOperationException>(() => dispatcher.Invoke(() => dispatcher.Invoke(() => 1)));
+        }
     }
 }
