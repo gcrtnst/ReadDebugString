@@ -16,6 +16,7 @@ namespace ReadDebugStringTests
             using var dispatcher = new Dispatcher();
             dispatcher.Invoke(() =>
             {
+                Thread.Sleep(100);
                 ok = true;
                 return;
             });
@@ -29,6 +30,7 @@ namespace ReadDebugStringTests
             using var dispatcher = new Dispatcher();
             await dispatcher.InvokeAsync(() =>
             {
+                Thread.Sleep(100);
                 ok = true;
                 return;
             });
