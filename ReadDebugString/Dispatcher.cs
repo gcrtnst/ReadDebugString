@@ -9,45 +9,82 @@ namespace ReadDebugString
 {
     public class Dispatcher : IDisposable
     {
-        private readonly Worker worker = new();
+        private readonly Manager manager = new();
 
         public async Task InvokeAsync(Action action)
         {
             using var job = new ActionJob(action);
-            worker.Add(job);
+            manager.Add(job);
             await job.ResultAsync();
         }
 
         public async Task<T> InvokeAsync<T>(Func<T> func)
         {
             using var job = new FuncJob<T>(func);
-            worker.Add(job);
+            manager.Add(job);
             return await job.ResultAsync();
         }
 
         public void Invoke(Action action)
         {
             using var job = new ActionJob(action);
-            worker.Add(job);
+            manager.Add(job);
             job.Result();
         }
 
         public T Invoke<T>(Func<T> func)
         {
             using var job = new FuncJob<T>(func);
-            worker.Add(job);
+            manager.Add(job);
             return job.Result();
         }
 
 #pragma warning disable CA1816
-        public void Dispose() => worker.Dispose();
+        public void Dispose() => manager.Dispose();
 #pragma warning restore CA1816
     }
 
-    internal class Worker : IDisposable
+    internal class Manager : IDisposable
     {
-        private readonly Thread thread;
-        private readonly BlockingCollection<Job> queue;
+        private readonly Worker worker = new();
+
+        public void Add(Job job)
+        {
+            if (Thread.CurrentThread.ManagedThreadId == worker.thread.ManagedThreadId) throw new InvalidOperationException();
+            try
+            {
+                worker.queue.Add(job);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ObjectDisposedException(nameof(Manager));
+            }
+        }
+
+        public void Dispose()
+        {
+            Stop();
+            GC.SuppressFinalize(this);
+            worker.queue.Dispose();
+        }
+
+        ~Manager() => Stop();
+
+        private void Stop()
+        {
+            try
+            {
+                worker.queue.CompleteAdding();
+            }
+            catch (ObjectDisposedException) { }
+            worker.thread.Join();
+        }
+    }
+
+    internal class Worker
+    {
+        public readonly Thread thread;
+        public readonly BlockingCollection<Job> queue;
 
         public Worker()
         {
@@ -57,34 +94,9 @@ namespace ReadDebugString
             thread.Start();
         }
 
-        public void Add(Job job)
-        {
-            if (Thread.CurrentThread.ManagedThreadId == thread.ManagedThreadId) throw new InvalidOperationException();
-            try
-            {
-                queue.Add(job);
-            }
-            catch (InvalidOperationException)
-            {
-                throw new ObjectDisposedException(nameof(Worker));
-            }
-        }
-
         private void Run()
         {
             foreach (var job in queue.GetConsumingEnumerable()) job.Run();
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                queue.CompleteAdding();
-            }
-            catch (ObjectDisposedException) { }
-            thread.Join();
-            queue.Dispose();
-            GC.SuppressFinalize(this);
         }
     }
 
