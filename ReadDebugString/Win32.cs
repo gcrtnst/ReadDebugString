@@ -7,17 +7,17 @@ using Sdk = Microsoft.Windows.Sdk;
 
 namespace ReadDebugString.Win32
 {
-    public static class Methods
+    internal static class Methods
     {
-        public static void DebugActiveProcess(uint processId)
+        internal static void DebugActiveProcess(uint processId)
         {
             var result = Sdk.PInvoke.DebugActiveProcess(processId);
             if (!result) throw new Win32Exception();
         }
 
-        public static DebugEvent WaitForDebugEvent() => WaitForDebugEvent(Sdk.Constants.INFINITE);
+        internal static DebugEvent WaitForDebugEvent() => WaitForDebugEvent(Sdk.Constants.INFINITE);
 
-        public static DebugEvent WaitForDebugEvent(uint milliseconds)
+        internal static DebugEvent WaitForDebugEvent(uint milliseconds)
         {
             var result = Sdk.PInvoke.WaitForDebugEventEx(out var debugEvent, milliseconds);
             if (!result) throw new Win32Exception();
@@ -31,25 +31,25 @@ namespace ReadDebugString.Win32
             }
         }
 
-        public static void ContinueDebugEvent(DebugEvent debugEvent, Constants.DebugContinueStatus continueStatus)
+        internal static void ContinueDebugEvent(DebugEvent debugEvent, Constants.DebugContinueStatus continueStatus)
         {
             var result = Sdk.PInvoke.ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, (uint)continueStatus);
             if (!result) throw new Win32Exception();
         }
 
-        public static void DebugActiveProcessStop(uint processId)
+        internal static void DebugActiveProcessStop(uint processId)
         {
             var result = Sdk.PInvoke.DebugActiveProcessStop(processId);
             if (!result) throw new Win32Exception();
         }
 
-        public static void DebugSetProcessKillOnExit(bool killOnExit)
+        internal static void DebugSetProcessKillOnExit(bool killOnExit)
         {
             var result = Sdk.PInvoke.DebugSetProcessKillOnExit(killOnExit);
             if (!result) throw new Win32Exception();
         }
 
-        public static unsafe T? ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress) where T : unmanaged
+        internal static unsafe T? ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress) where T : unmanaged
         {
             var buf = new T[1];
             var size = ReadProcessMemory(process, baseAddress, buf.AsSpan());
@@ -57,7 +57,7 @@ namespace ReadDebugString.Win32
             return buf[0];
         }
 
-        public static unsafe nuint ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress, Span<T> buffer) where T : unmanaged
+        internal static unsafe nuint ReadProcessMemory<T>(SafeProcessHandle process, IntPtr baseAddress, Span<T> buffer) where T : unmanaged
         {
             nuint numberOfBytesRead;
             bool result;
@@ -70,7 +70,7 @@ namespace ReadDebugString.Win32
             return numberOfBytesRead;
         }
 
-        public static unsafe ProcessInformation CreateProcess(string? applicationName, string? commandLine, Constants.ProcessCreationFlags creationFlags)
+        internal static unsafe ProcessInformation CreateProcess(string? applicationName, string? commandLine, Constants.ProcessCreationFlags creationFlags)
         {
             var arrCommandLine = new char[(commandLine?.Length + 1) ?? 0];
             commandLine?.CopyTo(0, arrCommandLine, 0, commandLine.Length);
@@ -90,7 +90,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class Constants
+    internal class Constants
     {
         public enum DebugContinueStatus : uint
         {
@@ -136,7 +136,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class DebugEvent
+    internal class DebugEvent
     {
         public readonly uint ProcessId;
         public readonly uint ThreadId;
@@ -206,7 +206,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class CreateProcessDebugEvent : DebugEvent
+    internal class CreateProcessDebugEvent : DebugEvent
     {
         public readonly SafeFileHandle File;
         public readonly SafeProcessHandle Process;
@@ -237,7 +237,7 @@ namespace ReadDebugString.Win32
         public string? ReadImageName(SafeProcessHandle process) => ReadImageName(process, imageName, unicode);
     }
 
-    public class CreateThreadDebugEvent : DebugEvent
+    internal class CreateThreadDebugEvent : DebugEvent
     {
         public readonly SafeThreadHandle Thread;
         public readonly IntPtr ThreadLocalBase;
@@ -251,7 +251,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class ExceptionDebugEvent : DebugEvent
+    internal class ExceptionDebugEvent : DebugEvent
     {
         public readonly ExceptionRecord ExceptionRecord;
         public readonly bool FirstChance;
@@ -263,7 +263,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class ExitProcessDebugEvent : DebugEvent
+    internal class ExitProcessDebugEvent : DebugEvent
     {
         public readonly uint ExitCode;
 
@@ -273,7 +273,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class ExitThreadDebugEvent : DebugEvent
+    internal class ExitThreadDebugEvent : DebugEvent
     {
         public readonly uint ExitCode;
 
@@ -283,7 +283,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class LoadDllDebugEvent : DebugEvent
+    internal class LoadDllDebugEvent : DebugEvent
     {
         public readonly SafeFileHandle File;
         public readonly IntPtr BaseOfDll;
@@ -305,7 +305,7 @@ namespace ReadDebugString.Win32
         public string? ReadImageName(SafeProcessHandle process) => ReadImageName(process, imageName, unicode);
     }
 
-    public class OutputDebugStringEvent : DebugEvent
+    internal class OutputDebugStringEvent : DebugEvent
     {
         private readonly IntPtr debugStringData;
         private readonly bool unicode;
@@ -324,7 +324,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class RipEvent : DebugEvent
+    internal class RipEvent : DebugEvent
     {
         public readonly uint Error;
         public readonly uint Type;
@@ -336,7 +336,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class UnloadDllDebugInfo : DebugEvent
+    internal class UnloadDllDebugInfo : DebugEvent
     {
         public readonly IntPtr BaseOfDll;
 
@@ -346,7 +346,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class ExceptionRecord
+    internal class ExceptionRecord
     {
         public readonly uint Code;
         public readonly uint Flags;
@@ -366,7 +366,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class ProcessInformation
+    internal class ProcessInformation
     {
         public readonly SafeProcessHandle Process;
         public readonly SafeThreadHandle Thread;
@@ -382,7 +382,7 @@ namespace ReadDebugString.Win32
         }
     }
 
-    public class SafeThreadHandle : SafeHandleZeroOrMinusOneIsInvalid
+    internal class SafeThreadHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         public SafeThreadHandle(IntPtr existingHandle, bool ownsHandle) : base(ownsHandle)
         {
