@@ -39,14 +39,9 @@ namespace ReadDebugString
             return job.Result();
         }
 
-        public void Dispose()
-        {
-            DisposeImpl();
-            GC.SuppressFinalize(this);
-        }
-
-        ~Dispatcher() => DisposeImpl();
-        private void DisposeImpl() => worker.Dispose();
+#pragma warning disable CA1816
+        public void Dispose() => worker.Dispose();
+#pragma warning restore CA1816
     }
 
     internal class Worker : IDisposable
@@ -82,14 +77,6 @@ namespace ReadDebugString
 
         public void Dispose()
         {
-            DisposeImpl();
-            GC.SuppressFinalize(this);
-        }
-
-        ~Worker() => DisposeImpl();
-
-        private void DisposeImpl()
-        {
             try
             {
                 queue.CompleteAdding();
@@ -97,6 +84,7 @@ namespace ReadDebugString
             catch (ObjectDisposedException) { }
             thread.Join();
             queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 
@@ -197,13 +185,6 @@ namespace ReadDebugString
             return task.ContinueWith((t) => _ = rwh.Unregister(completed));
         }
 
-        public void Dispose()
-        {
-            DisposeImpl();
-            GC.SuppressFinalize(this);
-        }
-
-        ~Job() => DisposeImpl();
-        private void DisposeImpl() => completed.Dispose();
+        public void Dispose() => completed.Dispose();
     }
 }

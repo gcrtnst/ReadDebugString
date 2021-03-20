@@ -45,13 +45,6 @@ namespace ReadDebugString
             }
         }
 
-        public void Dispose()
-        {
-            DisposeImpl();
-            GC.SuppressFinalize(this);
-        }
-
-        ~Debugger() => DisposeImpl();
-        private void DisposeImpl() => dispatcher.Dispose();
+        public void Dispose() => dispatcher.Dispose();
     }
 }
