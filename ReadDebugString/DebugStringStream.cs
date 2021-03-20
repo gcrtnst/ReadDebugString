@@ -98,7 +98,11 @@ namespace ReadDebugString
 
         public void Reset() => throw new NotSupportedException();
 
-        public async ValueTask DisposeAsync() => await Task.Run(Dispose);
+        public ValueTask DisposeAsync()
+        {
+            Dispose();
+            return new ValueTask();
+        }
 
         public void Dispose()
         {
