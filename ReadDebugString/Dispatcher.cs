@@ -96,7 +96,15 @@ namespace ReadDebugString
 
         private void Run()
         {
-            foreach (var job in queue.GetConsumingEnumerable()) job.Run();
+            Thread.BeginThreadAffinity();
+            try
+            {
+                foreach (var job in queue.GetConsumingEnumerable()) job.Run();
+            }
+            finally
+            {
+                Thread.EndThreadAffinity();
+            }
         }
     }
 
