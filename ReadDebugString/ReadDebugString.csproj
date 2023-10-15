@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AssemblyName>ReadDebugString</AssemblyName>
     <PackageId>ReadDebugString</PackageId>
-    <Version>1.0.0-alpha1</Version>
+    <Version>1.0.0-alpha2</Version>
     <Authors>gcrtnst</Authors>
     <Product>ReadDebugString</Product>
     <Company />
